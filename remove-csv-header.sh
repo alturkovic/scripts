@@ -97,7 +97,7 @@ if [ ${#_files[@]} -ne 0 ]; then
             echo ${_header} > ${_output_file}
             [ -n "$_verbose" ] && echo "INFO: Copied header from file '${_file}' to '${_output_file}'" >&2
 
-            tail -n +2 ${_file} > ${_file}${_processing_suffix} && mv -f ${_file}${_processing_suffix} ${_file}
+            tail -n +2 ${_file} > ${_file}${_processing_suffix} && mv -f ${_file}${_processing_suffix} ${_file} && mv -f ${_file} ${_file}${_prepared_suffix}
 
             if [ "$?" -eq "0" ]; then
                 [ -n "$_verbose" ] && echo "INFO: Removed header from file '${_file}'" >&2
