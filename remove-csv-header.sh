@@ -25,7 +25,7 @@ usage() {
 	""" >&2
 }
 
-while getopts ":s:hv" _opt; do
+while getopts ":s:t:p:hv" _opt; do
   case ${_opt} in
     s )
       _prepared_suffix=$OPTARG
@@ -80,8 +80,8 @@ _files=($(find ${_source_dir} -name ${_file_pattern} -type f))
 
 echo "INFO: Found files matching '${_file_pattern}': ${_files[*]}" >&2
 
-if [ ${#_files[@]} -ne 0 ]; then
-    for _file in "${_files[@]}"; do
+if [ "$#_files[@]" -ne "0" ]; then
+    for _file in ${_files[@]}; do
         echo "--------------------------------------------------------------" >&2
         _start=$(date +%s)
 
