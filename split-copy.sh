@@ -1,7 +1,5 @@
 #!/bin/bash
 
-_options=":s:P:r:w:hvV"
-
 _size=
 _port=22
 _verbose=
@@ -20,8 +18,8 @@ usage() {
   remote-file     SCP format for remote file
 
   Options:
-    -s <size>     split file into smaller pieces 
-    -P <port>     remote port
+    -s <size>     split file into smaller pieces
+    -p <port>     remote port
     -r <retries>  retries
     -w <seconds>  seconds between retries
     -v            verbose output
@@ -30,7 +28,7 @@ usage() {
 """ >&2
 }
 
-# be nice and clean up 
+# be nice and clean up
 onexit() {
   [ -n "$_tmp_dir_path" -a -e "$_tmp_dir_path" ] && rm -r $_tmp_dir_path/tmp_*
   [ -n "$_tmp_dir_path" -a -e "$_tmp_dir_path" ] && rmdir $_tmp_dir_path
@@ -38,12 +36,12 @@ onexit() {
 
 trap onexit EXIT
 
-while getopts $_options _option; do
-  case $_option in 
+while getopts ":s:p:r:w:hvV" _opt; do
+  case ${_opt} in
     s )
       _size=$OPTARG
       ;;
-    P )
+    p )
       _port=$OPTARG
       ;;
     r )
@@ -98,67 +96,67 @@ _ssh_spec=${_remote%%:*}
 [ -n "$_debug" ] && echo "DEBUG: SSH spec: '$_ssh_spec'" >&2
 [ -n "$_debug" ] && echo "DEBUG: Testing ssh connectivity" >&2
 
-if ! ssh $_ssh_spec true 2>/dev/null ; then
-  echo "ERROR: Failed to connect to '$_ssh_spec'" >&2 && exit 1 
+if ! ssh ${_ssh_spec} true 2>/dev/null ; then
+  echo "ERROR: Failed to connect to '$_ssh_spec'" >&2 && exit 1
 fi;
 
-# prepare local file for move and split 
+# prepare local file for move and split
 
 _tmp_dir_path="/tmp/$$"
 
-[ -n "$_verbose" ] && echo "INFO: Creating temporary directory '$_tmp_dir_path' " >&2 
-mkdir -p $_tmp_dir_path
+[ -n "$_verbose" ] && echo "INFO: Creating temporary directory '$_tmp_dir_path' " >&2
+mkdir -p ${_tmp_dir_path}
 
 [ ! -e "$_tmp_dir_path" ] && echo "ERROR: Failed to create temporary directory '$_tmp_dir_path'" >&2 && exit 1
 
 # split source file
 [ -n "$_verbose" ] && echo "INFO: Preparing source file for split copy" >&2
 
-cd $_tmp_dir_path && split -b $_size "$(realpath $_file)" "tmp_$(basename $_file)_"
+cd ${_tmp_dir_path} && split -b ${_size} "$(realpath ${_file})" "tmp_$(basename ${_file})_"
 [ "$?" -ne "0" ] && echo "ERROR: Failed to split source file '$_file'" >&2 && exit 1
-[ -n "$_debug" ] && ls -l $_tmp_dir_path
+[ -n "$_debug" ] && ls -l ${_tmp_dir_path}
 
 # ready to copy to remote
 
 _r_file_spec=${_remote##*:}
 [ -n "$_debug" ] && echo "DEBUG: Remote file spec '$_r_file_spec'" >&2
 
-_r_dirname=$(dirname $_r_file_spec)
-[ -n "$_debug" ] && echo "DEBUG: Remote dirname '$_r_dirname'" >&2
+_r_dir_name=$(dirname ${_r_file_spec})
+[ -n "$_debug" ] && echo "DEBUG: Remote dirname '$_r_dir_name'" >&2
 
 # check if there is something already copied over
-[ -n "$_debug" ] && echo "DEBUG: Local shasum" >&2 && cd $_tmp_dir_path && sha1sum "tmp_$(basename $_file)_"* && echo ""
-[ -n "$_debug" ] && echo "DEBUG: Remote shasum" >&2 && cd $_tmp_dir_path && sha1sum "tmp_$(basename $_file)_"* |
-  ssh $_ssh_spec "cd $_r_dirname && sha1sum -c --strict - 2>/dev/null" 2>/dev/null && echo ""
+[ -n "$_debug" ] && echo "DEBUG: Local shasum" >&2 && cd ${_tmp_dir_path} && sha1sum "tmp_$(basename ${_file})_"* && echo ""
+[ -n "$_debug" ] && echo "DEBUG: Remote shasum" >&2 && cd ${_tmp_dir_path} && sha1sum "tmp_$(basename ${_file})_"* |
+  ssh ${_ssh_spec} "cd $_r_dir_name && sha1sum -c --strict - 2>/dev/null" 2>/dev/null && echo ""
 
-_failed_files="$(cd $_tmp_dir_path && sha1sum "tmp_$(basename $_file)_"* | 
-  ssh $_ssh_spec "cd $_r_dirname && sha1sum -c --strict - 2>/dev/null" 2>/dev/null | 
-  grep FAILED | 
+_failed_files="$(cd ${_tmp_dir_path} && sha1sum "tmp_$(basename ${_file})_"* |
+  ssh ${_ssh_spec} "cd $_r_dir_name && sha1sum -c --strict - 2>/dev/null" 2>/dev/null |
+  grep FAILED |
   sed 's/^\(.*\): FAILED.*$/\1/')"
 
 _retry_counter=0
 while [ -n "$_failed_files" -a "$_retry_counter" -lt "$_retry" ]; do
 
-  for _f_file in $_failed_files; do 
+  for _f_file in ${_failed_files}; do
     [ -n "$_verbose" ] && echo "INFO: copy $_f_file" >&2
 
-    scp $_tmp_dir_path/$_f_file $_ssh_spec:$_r_dirname/.
+    scp ${_tmp_dir_path}/${_f_file} ${_ssh_spec}:${_r_dir_name}/.
 
   done
 
-  [ -n "$_debug" ] && ssh $_ssh_spec "cd $_r_dirname && sha1sum tmp_$(basename $_file)_*  2>/dev/null" 2>/dev/null
+  [ -n "$_debug" ] && ssh ${_ssh_spec} "cd $_r_dir_name && sha1sum tmp_$(basename ${_file})_*  2>/dev/null" 2>/dev/null
 
-  _failed_files="$(cd $_tmp_dir_path && sha1sum "tmp_$(basename $_file)_"* | 
-    ssh $_ssh_spec "cd $_r_dirname && sha1sum -c --strict - 2>/dev/null" 2>/dev/null | 
-    grep FAILED | 
+  _failed_files="$(cd ${_tmp_dir_path} && sha1sum "tmp_$(basename ${_file})_"* |
+    ssh ${_ssh_spec} "cd $_r_dir_name && sha1sum -c --strict - 2>/dev/null" 2>/dev/null |
+    grep FAILED |
     sed 's/^\(.*\): FAILED.*$/\1/')"
 
   [ -n "$_failed_files" ] && echo -e "Failed during copy:\n---\n$_failed_files\n---"
 
   ((_retry_counter++))
- 
+
   if [ -n "$_wait" -a -n "$_failed_files" ]; then
-    echo "Waiting for $_wait seconds, try $_retry_counter of $_retry"    
+    echo "Waiting for $_wait seconds, try $_retry_counter of $_retry"
     sleep "$_wait"
   fi
 
@@ -166,13 +164,13 @@ done
 
 [ -n "$_failed_files" ] && echo "Failed to copy all fragments, unable to join file" >&2 && exit 2
 
-[ -n "$_verbose"] && echo "Joining files..."
-ssh $_ssh_spec "cat $_r_dirname/tmp_$(basename $_file)_* > $_r_dirname/$(basename $_file) && rm $_r_dirname/tmp_$(basename $_file)_*" 2>/dev/null
+[ -n "$_verbose" ] && echo "Joining files..."
+ssh ${_ssh_spec} "cat $_r_dir_name/tmp_$(basename ${_file})_* > $_r_dir_name/$(basename ${_file}) && rm $_r_dir_name/tmp_$(basename ${_file})_*" 2>/dev/null
 
-if [ "$?" -eq "0" ]; then 
-  echo "SUCCESS"
+if [ "$?" -eq "0" ]; then
+  echo "SUCCESS" >&2
  exit 0
-else 
-  echo "FAILED"
-  exit 2 
+else
+  echo "FAILED" >&2
+  exit 2
 fi
