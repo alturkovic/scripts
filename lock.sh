@@ -8,7 +8,7 @@ _basename=$(basename $0)
 
 lock() {
   if [ "$#" -eq "0" ]; then
-    _lock_file_key=$_basename
+    _lock_file_key=${_basename}
   else
     _lock_file_key=$1
   fi
@@ -27,7 +27,7 @@ lock() {
 
 release() {
   if [ "$#" -eq "0" ]; then
-    _lock_file_key=$_basename
+    _lock_file_key=${_basename}
   else
     _lock_file_key=$1
   fi
