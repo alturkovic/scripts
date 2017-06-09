@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Lock PID based
-
 _lock_file_key=
 
 _basename=$(basename $0)
