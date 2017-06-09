@@ -80,7 +80,7 @@ _files=($(find ${_source_dir} -name ${_file_pattern} -type f))
 
 echo "INFO: Found files matching '${_file_pattern}': ${_files[*]}" >&2
 
-if [ "$#_files[@]" -ne "0" ]; then
+if [ "${#_files[@]}" -ne "0" ]; then
     for _file in ${_files[@]}; do
         echo "--------------------------------------------------------------" >&2
         _start=$(date +%s)
