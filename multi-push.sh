@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # example setup:
-_dest_hosts=( "example01.com" "example02.com" )
-_users=( "user01" "user02" )
-_target_dirs=( "/tmp/1/" "/tmp/2/" )
+_dest_hosts=( "tc01.lab.biss.hr" "tc02.lab.biss.hr" )
+_users=( "tc01" "tc02" )
+_target_dirs=( "/tmp/tc01/" "/tmp/tc02/" )
 
 _dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 
