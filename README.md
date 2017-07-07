@@ -1,8 +1,8 @@
 # scripts
 Handy bash scripts
 
-## file-push
+## multi-push
 Example:
-./file-push.sh -l mylock -p '*.txt' 'hostname' 'root' '/tmp/'
+./multi-push.sh -l mylock -p '*.txt' 'hostname' 'root' '/tmp/'
 
 ##TODO
