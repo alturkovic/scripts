@@ -4,6 +4,7 @@ _dest_hosts=( )
 _users=( )
 _target_dirs=( )
 _lock_name=
+_file_pattern=
 
 _dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 
@@ -14,9 +15,7 @@ echo ""
 
 _total_start=$(date +%s)
 
-source /opt/apps/lock.sh # update to match your lock.sh location
-
-lock ${_lock_name}
+source lock.sh # update to match your lock.sh location
 
 usage() {
   echo """Usage $0 [options] '<hosts>' '<users>' '<directories>'
@@ -26,14 +25,18 @@ usage() {
 
   Options:
     -l          unique lock name
+    -p          file pattern to scan
     -h          help
 """ >&2
 }
 
-while getopts ":l:h" _opt; do
+while getopts ":l:p:h" _opt; do
   case ${_opt} in
     l )
       _lock_name=$OPTARG
+      ;;
+    p )
+      _file_pattern=$OPTARG
       ;;
     h )
       usage
@@ -70,11 +73,14 @@ if [ ${#_dest_hosts[@]} -ne ${#_users[@]} -o ${#_dest_hosts[@]} -ne ${#_target_d
   exit 1
 fi
 
+lock ${_lock_name}
+
 # see if there is anything to push
-if [ "$(find . -iname '*.csv' | wc -l)" -gt "0" ]; then
+_files_to_push=(`find ./ -maxdepth 1 -name "${_file_pattern}"`)
+if [ ${#_files_to_push[@]} -gt "0" ]; then
 
   # for each file
-  for _file in *.csv; do
+  for _file in "${_files_to_push[@]}"; do
     echo "--------------------------------------------------------------"
     echo "Push file $_file @ $(date '+%Y-%m-%d %H:%M:%S')"
     _start=$(date +%s)
