@@ -137,10 +137,9 @@ rm $_backup_dir/$_dest_file_name
 # remove older backups 
 
 if [ "$_remove_older" = "t" ]; then
-  echo "Cleaning up files older than $_max_age days"
-  find $_backup_dir -mindepth 1 -mtime +$_max_age
-
-  find $_backup_dir -mindepth 1 -mtime +$_max_age -delete
+  if [ -n "$(find $_backup_dir -maxdepth 1 -type f -mtime +$_max_age)" ]; then
+    echo "Cleaning old backup files ($(find $_backup_dir -maxdepth 1 -type f -mtime +$_max_age | wc -l))"
+    find $_backup_dir -maxdepth 1 -type f -mtime +$_max_age | sed 's/\(.*\)/  \1/'
+    find $_backup_dir -maxdepth 1 -type f -mtime +$_max_age -delete
+  fi
 fi
-
-
