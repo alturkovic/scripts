@@ -1,2 +1,2 @@
-# Delete all keys matching a pattern
-redis-cli --scan --pattern "*:foo:bar:*" | xargs -L 100 redis-cli DEL
+# Delete all keys matching a pattern in DB 1
+redis-cli -n 1 --scan --pattern "*:foo:bar:*" | xargs -L 100 redis-cli -n 1 DEL
