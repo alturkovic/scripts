@@ -18,7 +18,13 @@ _total_start=$(date +%s)
 source lock.sh # update to match your lock.sh location
 
 usage() {
-  echo """Usage $0 [options] '<hosts>' '<users>' '<directories>'
+  echo """
+  Push files matching a pattern to multiple locations. Separate hosts, users and directories with ' ' (space).
+  
+  Example:
+  ./multi-push.sh -p '*.txt' 'hostname1 hostname2' 'user1 user2' '/tmp/ /tmp/'
+  
+  Usage $0 [options] '<hosts>' '<users>' '<directories>'
   hosts         host list
   users         user list
   directories   directory list
