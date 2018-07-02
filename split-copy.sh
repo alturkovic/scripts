@@ -13,7 +13,18 @@ _remote=
 _tmp_dir_path=
 
 usage() {
-  echo """Usage $0 [options] <source-file> <remote-file>
+  echo """
+  Can be used to push large files over slow connections.  
+  This script will split a large file into smaller parts and try to push them to a remote server
+  and merge them again. If this script is re-run, it will only attempt to push files
+  which haven't already been pushed successfully already. 
+  After pushing files, it will find files which failed and retry them 
+  for -r retries and wait -w seconds between retries.
+  
+  Example:
+  ./split-copy.sh -s 1M /tmp/example.txt user@host:/path/to/destination-folder/example.txt
+  
+  Usage $0 [options] <source-file> <remote-file>
   source-file     path to source file
   remote-file     SCP format for remote file
 
