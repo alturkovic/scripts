@@ -1,15 +1,17 @@
 #!/bin/bash
 
 push() {
-  _source_directory=$1
-  _file=$2
-  _user=$3
-  _host=$4
-  _target_absolute_dir=$5
-  _port=$6
+  if [ -z $1 ]; then echo "Missing source directory"; return 1; else _source_directory="$1"; fi
+  if [ -z $2 ]; then echo "Missing file"; return 1; else _file="$2"; fi
+  if [ -z $3 ]; then echo "Missing user"; return 1; else _user="$3"; fi
+  if [ -z $4 ]; then echo "Missing host"; return 1; else _host="$4"; fi
+  if [ -z $5 ]; then echo "Missing target directory"; return 1; else _target_absolute_dir="$5"; fi
+  if [ -z $6 ]; then _port=22; else _port="$6"; fi
+
+  # TODO check if remote file already exists and has the same checksum, just remove .tmp
 
   # copy as temporary, to prevent the other side from processing unfinished files
-  if scp -P $_port $_source_directory${_file} ${_user}@${_host}:${_target_absolute_dir}${_file}.tmp; then
+  if scp -q -P $_port $_source_directory${_file} ${_user}@${_host}:${_target_absolute_dir}${_file}.tmp; then
     echo -e "\tINFO - Copy successful for ${_file} @ ${_host}, removing .tmp extension"
 
     # remove temporary extension to mark copy as complete
