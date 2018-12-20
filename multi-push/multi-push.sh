@@ -6,6 +6,7 @@ _source_directory=
 _port=
 _lock_name=
 _configuration_file=
+_external_configuration_file=
 _destination_configuration=()
 
 source $(dirname $0)/lock.sh # update to match your lock.sh location
@@ -29,14 +30,16 @@ usage() {
   $4: _host
   $5: _target_absolute_dir
   $6: _port
+  $7: _external_configuration_file
 
   Options:
     -s          external script to use to push a file
     -f          file pattern to scan
     -d          base directory
-    -p          output port
+    -p          output port (OPTIONAL, scripts should use default port if not provided)
     -l          unique lock name (OPTIONAL) 
     -c          configuration file (OPTIONAL)
+    -e          external configuration file (OPTIONAL)
     -h          help
 
   Examples:
@@ -45,7 +48,7 @@ usage() {
 """ >&2
 }
 
-while getopts ":s:f:d:p:l:c:h" _opt; do
+while getopts ":s:f:d:p:l:c:e:h" _opt; do
   case ${_opt} in
     s )
       _external_push_script=$OPTARG
@@ -65,6 +68,9 @@ while getopts ":s:f:d:p:l:c:h" _opt; do
     c )
       _configuration_file=$OPTARG
       ;;
+    e )
+      _external_configuration_file=$OPTARG
+      ;;
     h )
       usage
       exit 0
@@ -79,6 +85,10 @@ while getopts ":s:f:d:p:l:c:h" _opt; do
       ;;
   esac
 done
+
+# sanity check arguments
+[ -z "$_file_pattern" ] && echo "ERROR: File pattern not defined" && exit 1
+[ -z "$_source_directory" ] && echo "ERROR: Source directory not defined" && exit 1
 
 # sanity check script and load it
 [ -z "$_external_push_script" ] && echo "ERROR: External push script not defined" && exit 1
@@ -140,7 +150,7 @@ if [ ${#_files_to_push[@]} -gt 0 ]; then
       IFS=" " read _user _host _target_absolute_dir <<< ${_dst_config}
 
       # append trailing '/' if missing
-      [[ "$_target_absolute_dir" != */ ]] && _target_absolute_dir="_target_absolute_dir/"
+      [[ "$_target_absolute_dir" != */ ]] && _target_absolute_dir="$_target_absolute_dir/"
 
       # if .success file exists for the file and host, it means that the file was already pushed to that host
       # no need to push it again, skip this host for this file 
@@ -149,7 +159,7 @@ if [ ${#_files_to_push[@]} -gt 0 ]; then
         continue
       fi
 
-      push "$_source_directory" "$_file" "$_user" "$_host" "$_target_absolute_dir" "$_port"
+      push "$_source_directory" "$_file" "$_user" "$_host" "$_target_absolute_dir" "$_port" "$_external_configuration_file"
      done
 
     echo -e "\tINFO - Cleaning up ${_file}"
@@ -180,7 +190,6 @@ if [ ${#_files_to_push[@]} -gt 0 ]; then
     _end=$(date +%s)
     _took=$((_end-_start))
     echo "File $_file pushed @ $(date '+%Y-%m-%d %H:%M:%S'), took: ${_took}s"
-    echo "--------------------------------------------------------------"
   done
 
 else
