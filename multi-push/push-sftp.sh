@@ -1,9 +1,9 @@
 #!/bin/bash
 
 put_file() {
-  echo -e "cd ${_target_absolute_dir}\n"
-  echo -e "lcd ${_source_directory}\n"
-  echo -e "put ${_file}\n"
+  echo "cd ${_target_absolute_dir}"
+  echo "lcd ${_source_directory}"
+  echo "put ${_file}"
 }
 
 push() {
