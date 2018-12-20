@@ -15,11 +15,8 @@ push() {
   if [ -z $6 ]; then _port=22; else _port="$6"; fi
   if [ -z $7 ]; then _push_batch_script=put_file ; else _push_batch_script=$(read "$7"); fi
 
-    echo sftp -oPort=$_port -b <(put_file) ${_user}@${_host}
-
-  # copy as temporary, to prevent the other side from processing unfinished files
-  if sftp -oPort=$_port -oPasswordAuthentication=no -b <(put_file) ${_user}@${_host}; then
-    echo -e "\tINFO - Push completed for ${_file} @ ${_host}"
+  if sftp -oPort=$_port -b <(put_file) ${_user}@${_host}; then
+    echo -e "INFO - Push completed for ${_file} @ ${_host}"
     touch $_source_directory${_file}.${_host}.success
   fi
 }
