@@ -155,53 +155,44 @@ if [ ${#_files_to_push[@]} -gt 0 ]; then
       # if .success file exists for the file and host, it means that the file was already pushed to that host
       # no need to push it again, skip this host for this file 
       if [ -e "$_source_directory${_file}.${_host}.success" ]; then
-        echo -e "\tWARN - Copy skipped for ${_file} @ ${_host} already copied"
+        echo -e "WARN - Copy skipped for ${_file} @ ${_host} already copied"
         continue
       fi
 
       push "$_source_directory" "$_file" "$_user" "$_host" "$_target_absolute_dir" "$_port" "$_external_configuration_file"
      done
 
-    echo -e "\tINFO - Cleaning up ${_file}"
-
     # verify before cleanup
     _success_count=$(find $_source_directory -maxdepth 1 -type f -name "${_file}.*.success" | wc -l)
     if [ $_success_count -eq 0 ]; then
       # no .success files found, nothing pushed to anyone yet
-      echo -e "\t\tINFO - Nothing to clean, $_file was not pushed to any host"
+      echo -e "WARN - $_file was not pushed to any host"
     else      
       if [ "$_success_count" -eq "${#_destination_configuration[@]}" ]; then
       	# found as many .success files as we have configured destinations
         # this means that each configured host received a copy of the file
-        echo -e "\t\tINFO - All hosts successful, clearing"
         rm $_source_directory${_file}*
+        echo -e "INFO - File $_file pushed to all hosts @ $(date '+%Y-%m-%d %H:%M:%S'), took: $(($(date +%s)-_start))s"        
       else
-        echo -e "\t\tERROR - Failed to push ${_file} to all hosts"
         # show which hosts didn't receive this file
         for _dst_config in "${_destination_configuration[@]}"; do
           IFS=" " read _user _host _target_absolute_dir <<< ${_dst_config}
           if [ ! -e "${_file}.${_host}.success" ]; then
-            echo -e "\t\t\tERROR - Push not complete for ${_file} @ ${_host}"
+            echo -e "ERROR - Push not complete for ${_file} @ ${_host}"
           fi
         done
       fi
-    fi
-
-    _end=$(date +%s)
-    _took=$((_end-_start))
-    echo "File $_file pushed @ $(date '+%Y-%m-%d %H:%M:%S'), took: ${_took}s"
+    fi    
   done
 
 else
   # no files matching the defined pattern were found during this execution
-  echo -e "\tINFO - No files found"
+  echo -e "INFO - No files found"
 fi
 
 # release the lock so next execution can grab it
 release ${_lock_name}
 
-_total_end=$(date +%s)
-_total_took=$((_total_end-_total_start))
-
-echo "Push for '$_source_directory' finished @ $(date '+%Y-%m-%d %H:%M:%S') took: ${_total_took}s"
+echo ""
+echo "Push for '$_source_directory' completed @ $(date '+%Y-%m-%d %H:%M:%S') took: $(($(date +%s)-_total_start))s"
 echo ""
