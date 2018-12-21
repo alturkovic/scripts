@@ -6,7 +6,6 @@ _source_directory=
 _port=
 _lock_name=
 _configuration_file=
-_external_configuration_file=
 _destination_configuration=()
 
 source $(dirname $0)/lock.sh # update to match your lock.sh location
@@ -30,7 +29,6 @@ usage() {
   $4: _host
   $5: _target_absolute_dir
   $6: _port
-  $7: _external_configuration_file
 
   Options:
     -s          external script to use to push a file
@@ -39,7 +37,6 @@ usage() {
     -p          output port (OPTIONAL, scripts should use default port if not provided)
     -l          unique lock name (OPTIONAL) 
     -c          configuration file (OPTIONAL)
-    -e          external configuration file (OPTIONAL)
     -h          help
 
   Examples:
@@ -48,7 +45,7 @@ usage() {
 """ >&2
 }
 
-while getopts ":s:f:d:p:l:c:e:h" _opt; do
+while getopts ":s:f:d:p:l:c:h" _opt; do
   case ${_opt} in
     s )
       _external_push_script=$OPTARG
@@ -68,20 +65,15 @@ while getopts ":s:f:d:p:l:c:e:h" _opt; do
     c )
       _configuration_file=$OPTARG
       ;;
-    e )
-      _external_configuration_file=$OPTARG
-      ;;
     h )
       usage
       exit 0
       ;;
     \? )
-      echo "Error. Unknown option: -$OPTARG"
-      exit 1
+      echo "ERROR: Unknown option: -$OPTARG" && exit 1
       ;;
     : )
-      echo "Error. Missing option argument for -$OPTARG"
-      exit 1
+      echo "ERROR: Missing option argument for -$OPTARG" && exit 1
       ;;
   esac
 done
@@ -100,7 +92,7 @@ source $_external_push_script
 
 # configuration checks
 # append trailing '/' if missing
-[[ "$_source_directory" != */ ]] && _source_directory="$_source_directory/"
+[[ "${_source_directory}" != */ ]] && _source_directory="${_source_directory}/"
 
 # read destination arguments from parameters or file
 # destination arguments are expected to be formatted like: user host destination_directory
@@ -113,17 +105,17 @@ if [ -z "${_configuration_file}" ]; then # configuration file not set, read dest
   	echo "ERROR: Must define configuration file or destination parameters, both are missing" && exit 1
   else
     for _destination_parameter in "$@"; do
-      _destination_configuration+=("$_destination_parameter")
+      _destination_configuration+=("${_destination_parameter}")
       if [ $(echo $_destination_parameter | wc -w) -ne 3 ]; then
-      	echo "ERROR: Parameters must consist of 3 parts, look at usage definition: $_destination_parameter" && exit 1 
+      	echo "ERROR: Parameters must consist of 3 parts, look at usage definition: ${_destination_parameter}" && exit 1 
       fi
     done
   fi
 else # configuration file set, read destinations from file
   while read -r _configuration_line; do 
-  	_destination_configuration+=("$_configuration_line")
+  	_destination_configuration+=("${_configuration_line}")
   	if [ $(echo $_configuration_line | wc -w) -ne 3 ]; then
-      	echo "ERROR: Parameters must consist of 3 parts, look at usage definition: $_configuration_line" && exit 1 
+      	echo "ERROR: Parameters must consist of 3 parts, look at usage definition: ${_configuration_line}" && exit 1 
     fi
   done < $_configuration_file
 fi
@@ -133,13 +125,13 @@ lock ${_lock_name}
 
 _total_start=$(date +%s)
 
-echo "Push for '$_source_directory' with pattern '$_file_pattern' started @ $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Push for '${_source_directory}' with pattern '${_file_pattern}' started @ $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
 # see if there is anything to push
 # only basenames of the files, not their paths
 # this is a bit dangerous with files that have space in their names, but such files are already a bad practice on their own and should be avoided anyway
-_files_to_push=($(find "$_source_directory" -maxdepth 1 -type f -name "$_file_pattern" -exec basename {} ';'))
+_files_to_push=($(find "${_source_directory}" -maxdepth 1 -type f -name "${_file_pattern}" -exec basename {} ';'))
 if [ ${#_files_to_push[@]} -gt 0 ]; then
 
   for _file in "${_files_to_push[@]}"; do
@@ -147,36 +139,36 @@ if [ ${#_files_to_push[@]} -gt 0 ]; then
     _start=$(date +%s)
 
     for _dst_config in "${_destination_configuration[@]}"; do
-      IFS=" " read _user _host _target_absolute_dir <<< ${_dst_config}
+      IFS=" " read _user _host _target_directory <<< ${_dst_config}
 
       # append trailing '/' if missing
-      [[ "$_target_absolute_dir" != */ ]] && _target_absolute_dir="$_target_absolute_dir/"
+      [[ "${_target_directory}" != */ ]] && _target_directory="${_target_directory}/"
 
       # if .success file exists for the file and host, it means that the file was already pushed to that host
       # no need to push it again, skip this host for this file 
-      if [ -e "$_source_directory${_file}.${_host}.success" ]; then
-        echo -e "WARN - Copy skipped for ${_file} @ ${_host} already copied"
+      if [ -e "${_source_directory}${_file}.${_host}.success" ]; then
+        echo "WARN - Copy skipped for ${_file} @ ${_host} already copied"
         continue
       fi
 
-      push "$_source_directory" "$_file" "$_user" "$_host" "$_target_absolute_dir" "$_port" "$_external_configuration_file"
+      push "${_source_directory}" "${_file}" "${_user}" "${_host}" "${_target_directory}" "${_port}"
      done
 
     # verify before cleanup
-    _success_count=$(find $_source_directory -maxdepth 1 -type f -name "${_file}.*.success" | wc -l)
+    _success_count=$(find ${_source_directory} -maxdepth 1 -type f -name "${_file}.*.success" | wc -l)
     if [ $_success_count -eq 0 ]; then
       # no .success files found, nothing pushed to anyone yet
-      echo -e "WARN - $_file was not pushed to any host"
+      echo "WARN - ${_file} was not pushed to any host"
     else      
       if [ "$_success_count" -eq "${#_destination_configuration[@]}" ]; then
       	# found as many .success files as we have configured destinations
         # this means that each configured host received a copy of the file
-        rm $_source_directory${_file}*
-        echo -e "INFO - File $_file pushed to all hosts @ $(date '+%Y-%m-%d %H:%M:%S'), took: $(($(date +%s)-_start))s"        
+        rm ${_source_directory}${_file}*
+        echo "INFO - File $_file pushed to all hosts @ $(date '+%Y-%m-%d %H:%M:%S'), took: $(($(date +%s)-_start))s"        
       else
         # show which hosts didn't receive this file
         for _dst_config in "${_destination_configuration[@]}"; do
-          IFS=" " read _user _host _target_absolute_dir <<< ${_dst_config}
+          IFS=" " read _user _host _target_directory <<< ${_dst_config}
           if [ ! -e "${_file}.${_host}.success" ]; then
             echo -e "ERROR - Push not complete for ${_file} @ ${_host}"
           fi
@@ -187,12 +179,12 @@ if [ ${#_files_to_push[@]} -gt 0 ]; then
 
 else
   # no files matching the defined pattern were found during this execution
-  echo -e "INFO - No files found"
+  echo "INFO - No files found"
 fi
 
 # release the lock so next execution can grab it
 release ${_lock_name}
 
 echo ""
-echo "Push for '$_source_directory' completed @ $(date '+%Y-%m-%d %H:%M:%S') took: $(($(date +%s)-_total_start))s"
+echo "Push for '${_source_directory}' completed @ $(date '+%Y-%m-%d %H:%M:%S') took: $(($(date +%s)-_total_start))s"
 echo ""
