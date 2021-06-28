@@ -1,0 +1,2 @@
+# find all JSON records where fields mismatch
+cat records.ndjson | jq 'select (.a != .b)'
