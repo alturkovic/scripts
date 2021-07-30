@@ -3,3 +3,6 @@ cat records.ndjson | jq 'select (.a != .b)'
 
 # remap array objects
 cat records.json | jq '.organizations[] | {id:.id,name:.name,plan:.plan.id}'
+
+# extract fields to CSV
+cat records.json | jq -r '.organizations[] | [.id,.name,.plan.id] | @csv'
