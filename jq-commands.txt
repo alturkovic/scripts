@@ -6,3 +6,6 @@ cat records.json | jq '.organizations[] | {id:.id,name:.name,plan:.plan.id}'
 
 # extract fields to CSV
 cat records.json | jq -r '.organizations[] | [.id,.name,.plan.id] | @csv'
+
+# recursivelly flatten
+curl 'https://hn.algolia.com/api/v1/items/:id' | jq '[recurse(.children[]) | del(.children)]'
