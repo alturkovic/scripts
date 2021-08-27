@@ -11,4 +11,4 @@ cat records.json | jq -r '.organizations[] | [.id,.name,.plan.id] | @csv'
 curl 'https://hn.algolia.com/api/v1/items/:id' | jq '[recurse(.children[]) | del(.children)]'
 
 # list to trimmed JSON string array
-cat list.ndjson | jq --raw-input 'gsub("\\s+"; "")' | jq -s
+cat list.ndjson | tr -d ' ' | jq --raw-input | jq -s -c
