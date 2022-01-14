@@ -15,3 +15,6 @@ cat list.txt | tr -d ' ' | jq --raw-input | jq -s -c
 
 # filter object by key names
 cat stop-words.json | jq 'with_entries(select(.key|startswith("z")))'
+
+# filter where key exists
+cat test.json | jq 'select(has("myKey"))'
