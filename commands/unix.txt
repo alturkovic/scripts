@@ -1,2 +1,5 @@
 #Sync remote directory to local (use -zhvn for test run with human readable output), only compressed files, delete after copy
 rsync -z --include '*.gz' --exclude '*' --remove-source-files remote-server:/remote/tmp/* /local/tmp/
+
+#Trigger POST endpoint for each line in file
+for URL in `cat urls.txt`; do echo $URL; curl -m 10 "https://service/endpoint" -H "Content-Type: application/json" --data '{"url":"$URL"}' ; done\
