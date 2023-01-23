@@ -2,4 +2,4 @@
 rsync -z --include '*.gz' --exclude '*' --remove-source-files remote-server:/remote/tmp/* /local/tmp/
 
 #Trigger POST endpoint for each line in file
-for URL in `cat urls.txt`; do echo $URL; curl -m 10 "https://service/endpoint" -H "Content-Type: application/json" --data '{"url":"$URL"}' ; done\
+cat urls.txt | xargs -I url curl -H "Content-Type: application/json" -d '{"url":"'url'"}' -X POST "https://turki.free.beeceptor.com"
