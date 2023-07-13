@@ -18,7 +18,7 @@ The configuration is complete, now use the service management option of `brew` t
 
 `sudo brew services start dnsmasq`
 
-## Step 2: Create a dns resolver and test setup
+## Step 2: Create a dns resolver
 
 Next create a dns resolver for the selected domain. Create a resolver directory if it doesn’t already exist:
 
@@ -36,7 +36,7 @@ Test if external links resolve successfully using the `ping` command below:
 
 It still works if a reply comes from the google.com server.
 
-Now check if `dnsmasq` handles all request on the `.test` domain.
+Now check if `dnsmasq` handles all request on the `.test` domain:
 
 `ping dev.test`
 
