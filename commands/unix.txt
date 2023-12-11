@@ -1,5 +1,8 @@
-#Sync remote directory to local (use -zhvn for test run with human readable output), only compressed files, delete after copy
+# Sync remote directory to local (use -zhvn for test run with human readable output), only compressed files, delete after copy
 rsync -z --include '*.gz' --exclude '*' --remove-source-files remote-server:/remote/tmp/* /local/tmp/
 
-#Trigger POST endpoint for each line in file
+# Trigger POST endpoint for each line in file
 cat urls.txt | xargs -I url curl -H "Content-Type: application/json" -d '{"url":"'url'"}' -X POST "https://turki.free.beeceptor.com"
+
+# Stream RTSP video in a loop
+vlc my-video.mp4 --sout="#rtp{sdp=rtsp://:8854/stream}" --loop :sout-keep
